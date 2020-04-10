@@ -1,7 +1,9 @@
 import 'dart:developer';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttershare/pages/activity_feed.dart';
+import 'package:fluttershare/pages/create_account.dart';
 import 'package:fluttershare/pages/profile.dart';
 import 'package:fluttershare/pages/search.dart';
 import 'package:fluttershare/pages/timeline.dart';
@@ -9,6 +11,8 @@ import 'package:fluttershare/pages/upload.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 final GoogleSignIn googleSignIn = GoogleSignIn();
+final userRef = Firestore.instance.collection('users');
+final DateTime timestamp = DateTime.now();
 
 class Home extends StatefulWidget {
   @override
@@ -39,6 +43,25 @@ class _HomeState extends State<Home> {
     });
   }
 
+  createUserInfirestore() async {
+    final GoogleSignInAccount user = googleSignIn.currentUser;
+    final DocumentSnapshot doc = await userRef.document(user.id).get();
+
+    final username = await Navigator.push(context,
+        MaterialPageRoute(
+            builder: (context) => CreateAccount()
+        ));
+    userRef.document(user.id).setData({
+      "id" : user.id,
+      "username" : username,
+      "photoUrl" : user.photoUrl,
+      "email" : user.email,
+      "displayName" : user.displayName,
+      "bio" : "",
+      "timestamp" : timestamp,
+    });
+  }
+
   @override
   void initState(){
     super.initState();
@@ -62,6 +85,8 @@ class _HomeState extends State<Home> {
 //  @override
 //  void initState() {
 //    super.initState();
+//    _pageController = PageController();
+//    _login();
 //    googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount account){
 //      handleSignIn(account);
 //    }, onError: (err){
@@ -77,7 +102,8 @@ class _HomeState extends State<Home> {
 //
 //  handleSignIn(GoogleSignInAccount account){
 //    if(account != null){
-//      print('User Sign In  : $account');
+//      //print('User Sign In  : $account');
+//      createUserInfirestore();
 //      setState(() {
 //        isAuth = true;
 //      });
@@ -103,7 +129,11 @@ class _HomeState extends State<Home> {
      return Scaffold(
        body: PageView(
          children: <Widget>[
-           Timeline(),
+           //Timeline(),
+           RaisedButton(
+             child: new Text('Logout'),
+             onPressed: _logout,
+           ),
            ActivityFeed(),
            Upload(),
            Search(),
