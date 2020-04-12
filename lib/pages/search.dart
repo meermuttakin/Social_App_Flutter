@@ -1,7 +1,6 @@
 import 'dart:html';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/svg.dart';
-
 import 'package:flutter/material.dart';
 
 class Search extends StatefulWidget {
@@ -28,13 +27,14 @@ class _SearchState extends State<Search> {
   }
 
   Container buildNoContent() {
+    final Orientation orientation =MediaQuery.of(context).orientation;
     return new Container(
       child: Center(
         child: ListView(
           shrinkWrap: true,
           children: <Widget>[
             SvgPicture.asset('assets/images/search.svg',
-            height: 300.0,),
+            height: orientation == Orientation.portrait ? 300.0 : 200.0,),
             Text("Find Users",
             textAlign: TextAlign.center,
             style: TextStyle(
