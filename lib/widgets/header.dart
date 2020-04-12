@@ -1,8 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-AppBar header(context, {bool isAppTitle = false, String titleText}) {
+AppBar header(context, {bool isAppTitle = false, String titleText, removeBackButton = false}) {
   return new AppBar(
+    automaticallyImplyLeading: removeBackButton ? false : true,
     title: new Text(
       isAppTitle ? 'Social App' : titleText,
       style: new TextStyle(

@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttershare/models/user.dart';
 import 'package:fluttershare/pages/activity_feed.dart';
 import 'package:fluttershare/pages/create_account.dart';
 import 'package:fluttershare/pages/profile.dart';
@@ -13,6 +14,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 final GoogleSignIn googleSignIn = GoogleSignIn();
 final userRef = Firestore.instance.collection('users');
 final DateTime timestamp = DateTime.now();
+User currentUser;
 
 class Home extends StatefulWidget {
   @override
@@ -25,15 +27,67 @@ class _HomeState extends State<Home> {
   GoogleSignIn _googleSignIn = GoogleSignIn();
   int pageIndex = 0;
 
-  _login() async{
-    try{
-      await _googleSignIn.signIn();
-      setState(() {
-        isAuth = true;
+//  _login() async{
+//    try{
+//      await _googleSignIn.signIn();
+//      setState(() {
+//        isAuth = true;
+//      });
+//    } catch (err){
+//      print(err);
+//    }
+//  }
+
+  createUserInfirestore() async {
+    final GoogleSignInAccount user = googleSignIn.currentUser;
+    DocumentSnapshot doc = await userRef.document(user.id).get();
+
+    if(!doc.exists){
+      final username = await Navigator.push(context,
+          MaterialPageRoute(
+              builder: (context) => CreateAccount()
+          ));
+      userRef.document(user.id).setData({
+        "id" : user.id,
+        "username" : username,
+        "photoUrl" : user.photoUrl,
+        "email" : user.email,
+        "displayName" : user.displayName,
+        "bio" : "",
+        "timestamp" : timestamp,
       });
-    } catch (err){
-      print(err);
+
+      doc = await userRef.document(user.id).get();
     }
+
+    currentUser = User.fromDocument(doc);
+    print(currentUser);
+    print(currentUser.username);
+  }
+
+//  @override
+//  void initState(){
+//    super.initState();
+//    _pageController = PageController();
+//    _login();
+//    //_logout();
+//  }
+  OnpaGechanged(int pageIndex){
+    setState(() {
+      this.pageIndex = pageIndex;
+    });
+  }
+
+  OntaP(int pageIndex){
+    _pageController.animateToPage(
+      pageIndex,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  login() async {
+    await googleSignIn.signIn();
   }
 
   _logout(){
@@ -43,81 +97,37 @@ class _HomeState extends State<Home> {
     });
   }
 
-  createUserInfirestore() async {
-    final GoogleSignInAccount user = googleSignIn.currentUser;
-    final DocumentSnapshot doc = await userRef.document(user.id).get();
-
-    final username = await Navigator.push(context,
-        MaterialPageRoute(
-            builder: (context) => CreateAccount()
-        ));
-    userRef.document(user.id).setData({
-      "id" : user.id,
-      "username" : username,
-      "photoUrl" : user.photoUrl,
-      "email" : user.email,
-      "displayName" : user.displayName,
-      "bio" : "",
-      "timestamp" : timestamp,
-    });
-  }
-
   @override
-  void initState(){
+  void initState() {
     super.initState();
     _pageController = PageController();
-    _login();
-    //_logout();
-  }
-  OnpaGechanged(int pageIndex){
-    setState(() {
-      this.pageIndex = pageIndex;
+    //_login();
+    googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount account) {
+      handleSignIn(account);
+    }, onError: (err){
+      print('User Sign In  : $err');
+    });
+    googleSignIn.signInSilently(suppressErrors: false).then((account){
+      handleSignIn(account);
+    }).catchError((err1){
+      print('Error User Sign In 2: $err1');
     });
   }
-  OntaP(int pageIndex){
-    _pageController.animateToPage(
-      pageIndex,
-      duration: Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
 
-//  @override
-//  void initState() {
-//    super.initState();
-//    _pageController = PageController();
-//    _login();
-//    googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount account){
-//      handleSignIn(account);
-//    }, onError: (err){
-//      print('Error User Sign In 1: $err');
-//    });
-//    googleSignIn.signInSilently(suppressErrors: false)
-//        .then((account){
-//      handleSignIn(account);
-//    }).catchError((err){
-//      print('Error User Sign In 2: $err');
-//    });
-//  }
-//
-//  handleSignIn(GoogleSignInAccount account){
-//    if(account != null){
-//      //print('User Sign In  : $account');
-//      createUserInfirestore();
-//      setState(() {
-//        isAuth = true;
-//      });
-//    }
-//    else{
-//      setState(() {
-//        isAuth = false;
-//      });
-//    }
-//  }
-//
-//  login(){
-//    googleSignIn.signIn();
-//  }
+  handleSignIn(GoogleSignInAccount account){
+    if (account != null) {
+      //print('User Sign In  : $account');
+      createUserInfirestore();
+      setState(() {
+        isAuth = true;
+      });
+    }
+    else {
+      setState(() {
+        isAuth = false;
+      });
+    }
+  }
 
   @override
   void dispose(){
@@ -185,7 +195,7 @@ class _HomeState extends State<Home> {
               ),
             ),
             GestureDetector(
-              onTap: _login,
+              onTap: login,
               child: new Container(
                 width: 300.0,
                 height: 60.0,
