@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: Colors.amberAccent,
-        accentColor: Colors.deepOrangeAccent,
+        accentColor: Colors.deepOrange,
       ),
       home: Home(),
     );
